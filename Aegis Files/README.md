@@ -1,145 +1,132 @@
-# Aegis Finance 🛡️
-### Personal Finance Management & Stock Portfolio Simulation System
-
-A hybrid desktop application built with a high-performance **C++ Object-Oriented Core Engine** and a modern, premium **React / TypeScript GUI** wrapped in **Tauri**. Designed as a comprehensive course project demonstrating advanced software architecture, file serialization, object-oriented design patterns, and cross-language IPC bridging.
+# Semester Project: Aegis Finance 🛡️
+### An Integrated Expense Tracker and Asset Management System
 
 ---
 
-## 🎓 Academic Information
-*   **Institution:** [Insert Your University Name]
-*   **Course:** [Insert Course Title, e.g., CS-201: Object-Oriented Programming]
-*   **Instructor:** [Insert Instructor Name / Professor Name]
-*   **Developers:**
-    *   [Insert Your Name] - [Insert Roll/Student ID]
-    *   [Insert Partner Name (if applicable)] - [Insert Roll/Student ID]
-*   **Submission Date:** [Insert Date]
+## 🏛️ Academic & Project Metadata
+*   **University:** Air University Karachi Campus
+*   **Department:** Cyber Security
+*   **Course(s):**
+    1.  **Object-Oriented Programming Structures** (Instructor: *Miss Muneeba Ahmed*)
+    2.  **Introduction to Software Engineering** (Instructor: *Miss Almas Ayesha Ansari*)
+*   **Authors:**
+    1.  **Syed Muhammad Hasan** (ID: `2540040`)
+    2.  **Ibad ur Rehman Khan** (ID: `2540042`)
+    3.  **Ahmed Memon** (ID: `2540194`)
+*   **Submission Date:** June 2026
 
 ---
 
-## 🏛️ System Architecture
+## 📝 Description of the Application
 
-Aegis Finance uses a decoupled hybrid architecture that bridges low-level compiled performance with premium web aesthetics:
+### 1. Languages and Modules Used
 
-```mermaid
-graph TD
-    A[React Web Frontend] <-->|JSON IPC| B[Tauri Rust Bridge]
-    B <-->|Spawn Sidecar & Stdin/Stdout| C[C++ Core Engine project_json.exe]
-    C <-->|Reads & Writes| D[(Local File Database)]
-    D -->|ledger.txt| E[Transactions log]
-    D -->|bills.txt| F[Bills status]
-    D -->|stocks.txt| G[Portfolio logs]
-```
+The system is built as a hybrid desktop application combining low-level object-oriented systems programming with high-end, responsive web graphical interfaces:
 
-1.  **C++ Core Engine**: Implements the business logic, ledger management, double-entry transaction record keeping, compound interest, stock profits, tax allocations, and late penalties. It communicates using standard JSON streams via standard I/O.
-2.  **Tauri Rust Bridge**: Exposes a secure IPC command `run_finance_command` which spawns the compiled C++ binary as a sub-process (sidecar), writes commands to standard input, and returns database updates from standard output.
-3.  **React / TypeScript GUI**: A responsive, dark-themed dashboard styled with premium glassmorphic UI components, real-time interactive charts, transactional staging zones, and user profile management.
-
----
-
-## ✨ Features Included
-
-### 📊 Financial Ledger & Double-Entry Accounting
-*   **Salary Crediting**: Records monthly income and auto-calculates baseline metrics.
-*   **Double-Entry Liquidation**: Automatically logs both principal refunds and net capital gains/losses in separate records upon asset sales to maintain accounting transparency.
-*   **Consolidate Savings**: Safely locks remaining liquid cash at the end of the month into a separate long-term savings pool.
-
-### 🧾 Utility Bill & Expense Management
-*   **Auto Tax Allocation**: Automatically splits incoming bills to deduct a 5% tax component.
-*   **Late Fee Penalty Calculator**: Applies a 3% late penalty on overdue bills plus a daily increment to prevent default.
-*   **Staged Balance Validation Scanner**: Validates the total projected cash balance before saving. If your staged expenses exceed your funds, the scanner blocks commits and displays a warnings banner to prevent overdrafts.
-
-### 📈 Pro-Trading Stock Simulator & Interactive Charts
-*   **15 Live Assets**: Simulates price volatility and ticks for BTC, ETH, SOL, stock equities, and assets.
-*   **Smooth Navigation Chart**: A custom-wrapped candlestick chart utilizing ApexCharts with:
-    *   Native wheel scroll zooming (5% rate) for granular viewports.
-    *   Fluid mouse drag panning to slide back through historical trends.
-    *   Ref-buffered updates to prevent layout jumping or resetting on live price ticks.
+*   **Backend Core Engine (C++)**: 
+    *   Written in **ISO C++17** using standard libraries (`<iostream>`, `<vector>`, `<string>`, `<fstream>`, `<sstream>`, `<iomanip>`).
+    *   Leverages the **Standard Template Library (STL)** for container management and customized text-file serialization/deserialization.
+*   **Desktop IPC Bridge (Rust / Tauri v2)**:
+    *   Implements **Rust** for native application windows, system shell execution, and thread safety.
+    *   Uses **Tauri v2** (`@tauri-apps/api` and `tauri-plugin-shell`) as a secure, fast IPC (Inter-Process Communication) bridge between React and the C++ engine.
+*   **Frontend Graphical User Interface (React / TypeScript)**:
+    *   Built with **TypeScript** and **React (v19)** powered by **Vite** for optimized, fast dev and production builds.
+    *   Styled with **Vanilla CSS3** utilizing custom CSS variables, custom-designed glassmorphism layouts, and smooth animations.
+*   **Data Visualization & Styling (Lucide & ApexCharts)**:
+    *   Uses **ApexCharts** and `react-apexcharts` to render real-time candlestick charts for simulated stocks/crypto assets, donut charts for budget shares, and order books.
+    *   Uses **Lucide React** for modern, crisp vector iconography.
 
 ---
 
-## 🛠️ Languages & Technologies Used
+### 2. How We Made It (Architecture & OOP Details)
 
-*   **Core Logic**: C++ (OOP, STL Streams, File I/O, Custom Serialization)
-*   **IPC Bridge**: Rust (Tauri v2 Shell plugins)
-*   **GUI Framework**: React (v19), TypeScript, Vite
-*   **Styling**: Vanilla CSS (CSS Variables, Flexbox/Grid, custom Glassmorphic layers)
-*   **Data Visualization**: ApexCharts / React-ApexCharts
+The project is structured under a **three-tier architecture**:
 
----
+#### A. The C++ Object-Oriented Domain Layer
+The foundation of Aegis Finance lies in its strict C++ Object-Oriented design:
+*   **Inheritance Hierarchy**: We established a polymorphic base class `Transaction` containing virtual method `.apply()`. Specialized transaction models inherit from this:
+    *   `SalaryIncome`: Credits the ledger and increments salary incomes.
+    *   `Expense`: Deducts balance and categorizes general outflows (Taxes, Penalties, Bills).
+    *   `InvestmentExpense`: Deducts cash and increments the active investment principal pool.
+    *   `InvestmentRefund`: Credits cash and deducts the active principal pool upon stock liquidation.
+    *   `InvestmentProfit`: Credits/deducts cash with capital gain/loss values.
+    *   `SavingsTransfer`: Transfers liquid cash into long-term savings.
+*   **Encapsulated Managers**: 
+    *   `Ledger`: Tracks cash balance, total savings, income breakdown, net worth, and handles double-entry balance bookkeeping.
+    *   `BillManager`: Reads and writes bill records from `bills.txt`, handles automatic tax splits, and computes overdue late fees.
+    *   `PortfolioManager`: Oversees active stock positions, processes liquidations, and serializes updates to `stocks.txt`.
 
-## 📂 Repository Directory Layout
+#### B. The Rust-Tauri IPC Bridging Layer
+The C++ core compiles into a separate backend console application. The Tauri wrapper coordinates execution using asynchronous Rust tasks:
+*   Tauri exposes a Rust invocation command: `run_finance_command(cmd_json: String)`.
+*   When a user clicks an action in the GUI, the JSON parameters are serialized and sent over the Tauri bridge.
+*   The Rust sidecar launcher spawns the compiled C++ binary, pipes the command through standard input (`stdin`), listens to standard output (`stdout`), reads the updated JSON ledger database, and pipes it back to React.
 
-You can place academic documents, slide decks, and project reports in the `/documents` folder, and screenshots in `/assets`.
-
-```
-├── C++ Core Files (Main Engine)
-│   ├── finance_core/
-│   │   ├── finance_core.cpp    # Core OOP Class implementations
-│   │   └── finance_core.h      # Core OOP declarations
-│   ├── main_cli.cpp            # C++ Command-line interface frontend
-│   └── main_json.cpp           # JSON stream command dispatcher
-│
-├── documents/                  # Place your PDFs, presentations & reports here!
-│   └── project_report.pdf
-│
-├── assets/                     # Store Readme screenshots and images here
-│   └── dashboard_mockup.png
-│
-├── src/                        # React Frontend Source Code
-│   ├── App.tsx                 # Main GUI dashboard & state machine
-│   ├── App.css                 # Premium glassmorphic styling
-│   └── main.tsx                # React mount point
-│
-├── src-tauri/                  # Tauri Desktop Wrappers
-│   ├── binaries/               # Compiled C++ sidecar binaries
-│   ├── src/                    # Rust backend command IPC route handlers
-│   ├── tauri.conf.json         # Desktop client configurations
-│   └── Cargo.toml              # Rust build manifest
-```
+#### C. The State-Ref Debounced React Layer
+Because the app updates live stock prices every second, we designed a custom state synchronization protocol:
+*   **Ref-State Separation**: Staging coordinates and manual zoom/pan levels are tracked in a React ref (`chartMinMaxValRef`) synchronously. A debounced state updater updates the React state 150ms after scroll/drag operations stop. This separates the native canvas drawing operations from React's virtual DOM re-renders, preventing chart jitter and coordinate lag.
+*   **Live Tickers**: Utilizes intervals to update asset prices based on randomized volatility multipliers.
 
 ---
 
-## 🚀 How to Run the Project
+### 3. What the App Does
 
-### 1. Build and Run C++ Command Line Interface (CLI)
-If you want to run the core engine separately in terminal mode:
-```bash
-# Compile core engine with CLI frontend
-g++ -O3 main_cli.cpp finance_core/finance_core.cpp -o aegis_cli.exe
-
-# Run the CLI app
-./aegis_cli.exe
-```
-
-### 2. Build the Tauri Desktop Application
-To run the full hybrid desktop app with the React GUI:
-
-**Prerequisites**: Install [Node.js](https://nodejs.org/), [Rust (rustup)](https://rustup.rs/), and [MinGW (g++)](https://www.mingw-w64.org/).
-
-```bash
-# 1. Install frontend dependencies
-npm install
-
-# 2. Compile C++ Sidecars for the desktop client
-g++ -O3 main_json.cpp finance_core/finance_core.cpp -o project_json.exe
-
-# 3. Copy compiled binaries to Tauri sidecar directories
-copy project_json.exe src-tauri/binaries/project_json-x86_64-pc-windows-gnu.exe
-copy project_json.exe src-tauri/binaries/project_json-x86_64-pc-windows-msvc.exe
-
-# 4. Start the application in development mode
-npm run tauri dev
-```
-
-### 3. Build a Production Installer
-To bundle the application into a standalone desktop installer (`.msi` or `.exe`):
-```bash
-npm run tauri build
-```
-The installer will be generated in `src-tauri/target/release/bundle/`.
+Aegis Finance is a desktop financial dashboard that helps users organize their budget, track recurring bills, and simulate trading stock/cryptocurrency assets. It functions as a complete sandbox database:
+*   Users add their monthly income and bills.
+*   The application reads and writes ledger histories to local flat-file databases (`ledger.txt`, `bills.txt`, `stocks.txt`).
+*   It provides real-time mathematical validation before committing records to prevent account overdrafts.
+*   It offers a simulated live market where users can "buy" and "sell" volatile assets using their ledger cash balance, charting their portfolio value dynamically.
 
 ---
 
-## 🌐 Web Hosting on Vercel
-A static preview of the **React frontend** can be hosted on Vercel. 
-*Note: Because web browsers operate inside sandboxes, the web-hosted version cannot execute local C++ binaries. It serves as a visual showcase of the UI and components. The full data pipeline requires running the Tauri desktop client.*
+### 4. What Are the Features?
+
+*   **Integrated Cash-Flow Ledger**: Complete logging of all salaries, savings deposits, and general bills.
+*   **Double-Entry Stock Sale Recording**: Unlike basic trackers that only log net returns, Aegis logs the exact cost-basis principal refund (`Principal Refund`) and net capital gain/loss (`P/L from Stock`) separately, preserving accounting integrity.
+*   **Staged Transaction Balance Validation Scanner**: Pre-scans all inputs in the queue. If your cumulative staged expenses exceed your current cash + staged income, it disables the commit button and displays an alert card specifying the shortfall.
+*   **Bill Tax & Late Penalties**: 
+    *   Automatically splits utility bills to allocate a **5% tax component** to the state.
+    *   Applies a **3% base penalty** + daily compounding fees on overdue bills.
+*   **Smooth Charting**: High-resolution candlestick charts with native scroll-wheel zooming and click-and-drag panning.
+*   **Live Order Book & Time & Sales Tick Feed**: Interactive trading dashboard showing active bids/asks and transaction logs.
+
+---
+
+### 5. Why This App is Necessary
+
+In today’s digital age, financial literacy is crucial, yet most personal finance tools are fragmented:
+*   Traditional spreadsheets require high manual effort to calculate taxes, penalties, and investment returns.
+*   Commercial finance tools connect directly to real bank accounts, making them risky for students to learn trading concepts.
+*   Most platforms separate budget tracking from investment tracking. Aegis Finance fills this gap by providing a single desktop workspace where cash assets, expenses, and investments interact dynamically in a safe, offline sandbox environment.
+
+---
+
+### 6. Why Users Should Use It
+
+*   **100% Offline & Private**: All data is stored locally in text files; no cloud synchronization or financial accounts connection is required.
+*   **Risk-Free Simulator**: Practice investing in volatile markets using your virtual cash.
+*   **Strict Math Controls**: The built-in scanner prevents you from planning unrealistic budgets that would result in debt.
+*   **Premium User Interface**: Dark mode glassmorphic UI elements provide a premium visual experience.
+
+---
+
+## 🖼️ Attached Images
+*(Screenshots will be uploaded here to demonstrate visual features: dashboard cards, candlestick panning, warning banners, and the ledger history table).*
+
+*   **Figure 1**: Core Dashboard Overview
+*   **Figure 2**: Live Trading panel with Smooth Candlestick Zooming
+*   **Figure 3**: Insufficient Funds validation scanner banner
+
+---
+
+## ✍️ Author's Note
+
+This semester project represents a integration of theoretical object-oriented C++ designs with modern software engineering workflows. Developing Aegis Finance allowed us to tackle real-world challenges, such as synchronizing asynchronous web states with low-level compiled command streams, managing file serialization under strict formats, and building high-performance interactive interfaces. 
+
+We would like to express our gratitude to **Miss Muneeba Ahmed** and **Miss Almas Ayesha Ansari** for their guidance, design critiques, and support throughout the semester.
+
+---
+
+## 📊 Summary
+
+Aegis Finance successfully demonstrates that desktop software can be both computationally robust and visually premium. By combining the safety of local C++ serialization with a dynamic React frontend, it offers a personal financial organizer and trading sandbox tailored for students, beginners, and security-minded users.

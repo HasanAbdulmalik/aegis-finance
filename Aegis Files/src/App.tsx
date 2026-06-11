@@ -593,8 +593,164 @@ export default function App() {
     return () => clearInterval(interval);
   }, [selectedAsset, market]);
 
+  // Check if we are running inside the Tauri desktop app
+  const isTauri = typeof window !== "undefined" && (window as any).__TAURI_INTERNALS__ !== undefined;
+
   // IPC execution wrapper
   const executeCommand = async (cmdObj: any) => {
+    if (!isTauri) {
+      // Browser Mock Implementation for Vercel Web Demo
+      setLoading(true);
+      await new Promise(resolve => setTimeout(resolve, 50)); // simulate async latency
+      
+      setFinanceData(prev => {
+        const next = { ...prev };
+        const todayStr = new Date().toISOString().split("T")[0];
+        
+        if (cmdObj.cmd === "load_data") {
+          if (prev.transactions.length > 0 || prev.balance > 0 || prev.savings > 0) {
+            return prev;
+          }
+          return {
+            balance: 2450.00,
+            savings: 8500.00,
+            deficits: 0.00,
+            transactions: [
+              { date: "2026-06-01", amount: 5000.00, description: "Monthly Salary Credited", category: "SALARY", monthYear: "2026-06" },
+              { date: "2026-06-03", amount: 200.00, description: "Bill Paid: Electricity", category: "BILL", monthYear: "2026-06" },
+              { date: "2026-06-03", amount: 10.00, description: "Tax: Electricity", category: "TAX", monthYear: "2026-06" },
+              { date: "2026-06-05", amount: 1000.00, description: "Invested in BTC", category: "INVESTMENT_EXP", monthYear: "2026-06" },
+              { date: "2026-06-05", amount: 10.00, description: "Investment Tax: BTC", category: "TAX", monthYear: "2026-06" }
+            ],
+            bills: [
+              { name: "Electricity", baseAmount: 200.00, dueDate: "2026-06-15", isPaid: true, billType: "UTILITY", taxComponent: 10.00, monthYear: "2026-06" },
+              { name: "Water & Gas", baseAmount: 85.00, dueDate: "2026-06-20", isPaid: false, billType: "UTILITY", taxComponent: 4.25, monthYear: "2026-06" }
+            ],
+            investments: [
+              { stockName: "BTC", investedAmount: 1000.00, currentValue: 1000.00, entryTax: 10.00, profitLoss: -10.00, monthYear: "2026-06" }
+            ]
+          };
+        }
+        
+        if (cmdObj.cmd === "add_salary") {
+          next.balance += cmdObj.amount;
+          next.transactions = [
+            ...next.transactions,
+            { date: cmdObj.date, amount: cmdObj.amount, description: cmdObj.desc, category: "SALARY", monthYear: cmdObj.my }
+          ];
+        }
+        
+        if (cmdObj.cmd === "add_bill") {
+          const newBill = {
+            name: cmdObj.name,
+            baseAmount: cmdObj.amount,
+            dueDate: cmdObj.due,
+            isPaid: cmdObj.pay_now,
+            billType: "UTILITY",
+            taxComponent: cmdObj.tax,
+            monthYear: cmdObj.my
+          };
+          next.bills = [...next.bills, newBill];
+          
+          if (cmdObj.pay_now) {
+            next.balance -= cmdObj.amount;
+            next.transactions = [
+              ...next.transactions,
+              { date: cmdObj.sub_date, amount: cmdObj.amount, description: "Bill Paid: " + cmdObj.name, category: "BILL", monthYear: cmdObj.my }
+            ];
+            
+            if (cmdObj.tax > 0) {
+              next.balance -= cmdObj.tax;
+              next.transactions = [
+                ...next.transactions,
+                { date: cmdObj.sub_date, amount: cmdObj.tax, description: "Tax: " + cmdObj.name, category: "TAX", monthYear: cmdObj.my }
+              ];
+            }
+          }
+        }
+        
+        if (cmdObj.cmd === "invest") {
+          const newInv: CppInvestment = {
+            stockName: cmdObj.stock,
+            investedAmount: cmdObj.amount,
+            currentValue: cmdObj.amount,
+            entryTax: cmdObj.tax,
+            profitLoss: -cmdObj.tax,
+            monthYear: cmdObj.my
+          };
+          next.investments = [...next.investments, newInv];
+          next.balance -= (cmdObj.amount + cmdObj.tax);
+          
+          next.transactions = [
+            ...next.transactions,
+            { date: cmdObj.date, amount: cmdObj.amount, description: "Invested in " + cmdObj.stock, category: "INVESTMENT_EXP", monthYear: cmdObj.my }
+          ];
+          if (cmdObj.tax > 0) {
+            next.transactions = [
+              ...next.transactions,
+              { date: cmdObj.date, amount: cmdObj.tax, description: "Investment Tax: " + cmdObj.stock, category: "TAX", monthYear: cmdObj.my }
+            ];
+          }
+        }
+        
+        if (cmdObj.cmd === "sell_investment") {
+          const invIdx = cmdObj.invest_index;
+          if (invIdx >= 0 && invIdx < next.investments.length) {
+            const inv = next.investments[invIdx];
+            const currentPrice = market[inv.stockName]?.currentPrice;
+            const assetConfig = ASSETS.find(a => a.name === inv.stockName);
+            const basePrice = assetConfig ? assetConfig.basePrice : inv.investedAmount;
+            
+            let liveValue = inv.investedAmount;
+            if (currentPrice && basePrice) {
+              liveValue = (currentPrice / basePrice) * inv.investedAmount;
+            }
+            
+            const profitLoss = liveValue - inv.investedAmount - inv.entryTax;
+            const refundVal = inv.investedAmount + inv.entryTax;
+            
+            next.balance += (refundVal + profitLoss);
+            
+            next.transactions = [
+              ...next.transactions,
+              { date: todayStr, amount: refundVal, description: "Principal Refund: " + inv.stockName, category: "INVESTMENT_REF", monthYear: inv.monthYear },
+              { date: todayStr, amount: profitLoss, description: "P/L from " + inv.stockName, category: "INVESTMENT_PL", monthYear: inv.monthYear }
+            ];
+            
+            next.investments = next.investments.filter((_, idx) => idx !== invIdx);
+          }
+        }
+        
+        if (cmdObj.cmd === "consolidate_savings") {
+          if (next.balance > 0) {
+            const amt = next.balance;
+            next.savings += amt;
+            next.balance = 0;
+            next.transactions = [
+              ...next.transactions,
+              { date: todayStr, amount: amt, description: "Monthly Savings", category: "SAVINGS", monthYear: cmdObj.my }
+            ];
+          }
+        }
+        
+        if (cmdObj.cmd === "clear_data") {
+          return {
+            balance: 0,
+            savings: 0,
+            deficits: 0,
+            transactions: [],
+            bills: [],
+            investments: []
+          };
+        }
+        
+        return next;
+      });
+      
+      setLoading(false);
+      return;
+    }
+
     try {
       const cmdJson = JSON.stringify(cmdObj);
       const rawRes = await invoke<string>("run_finance_command", { cmdJson });
